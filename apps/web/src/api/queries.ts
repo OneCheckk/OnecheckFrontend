@@ -13,6 +13,11 @@ import type {
   Alert,
   OfficerDashboardSummary,
   ClaimRecheckResult,
+  Institution,
+  TriangleFinding,
+  ForensicsSuiteData,
+  RiskScoreBreakdown,
+  CheckRun,
 } from '@contracts';
 
 // Canonical TanStack Query Key Factories
@@ -29,6 +34,10 @@ export const queryKeys = {
   dashboardOfficer: () => ['dashboard', 'officer'] as const,
   categories: () => ['categories'] as const,
   demoSettings: () => ['demo', 'settings'] as const,
+  institutions: () => ['institutions'] as const,
+  triangle: (id: string) => ['triangle', id] as const,
+  forensics: (id: string) => ['forensics', id] as const,
+  riskScore: (id: string) => ['risk-score', id] as const,
 };
 
 // --- Applications Queries ---
@@ -281,3 +290,78 @@ export const useVerifyAuditChain = () => {
     },
   });
 };
+
+// --- Integration Hooks: Institutions, Triangle, Forensics, Risk ---
+
+export const useInstitutions = () => {
+  return useQuery({
+    queryKey: queryKeys.institutions(),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: Institution[] }>('/institutions');
+      return res.data.data;
+    },
+  });
+};
+
+export const useTriangleFindings = (applicationId: string) => {
+  return useQuery({
+    queryKey: queryKeys.triangle(applicationId),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: TriangleFinding[] }>(`/applications/${applicationId}/triangle`);
+      return res.data.data;
+    },
+    enabled: !!applicationId,
+  });
+};
+
+export const useForensicsSuite = (applicationId: string) => {
+  return useQuery({
+    queryKey: queryKeys.forensics(applicationId),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: ForensicsSuiteData }>(`/applications/${applicationId}/forensics`);
+      return res.data.data;
+    },
+    enabled: !!applicationId,
+  });
+};
+
+export const useRiskScoreBreakdown = (applicationId: string) => {
+  return useQuery({
+    queryKey: queryKeys.riskScore(applicationId),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: RiskScoreBreakdown }>(`/applications/${applicationId}/risk-score`);
+      return res.data.data;
+    },
+    enabled: !!applicationId,
+  });
+};
+
+export const useRunOfficerChecks = (applicationId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.post<{ success: boolean; data: CheckRun }>(`/applications/${applicationId}/run-checks`);
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.app(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.findings(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.riskScore(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.forensics(applicationId) });
+    },
+  });
+};
+
+export const useUpdateAlertStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status, reason }: { id: string; status: string; reason: string }) => {
+      const res = await apiClient.patch<{ success: boolean; data: Alert }>(`/alerts/${id}`, { status, reason });
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.alerts() });
+    },
+  });
+};
+

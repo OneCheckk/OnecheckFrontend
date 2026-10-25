@@ -15,13 +15,34 @@ import {
   cleanLedger,
   cleanValidity,
 } from './fixtures/cleanApplication';
-import type { Finding, Claim, ChecklistItem, AuditEvent, BenchmarkRun, Alert } from '@contracts';
+import type {
+  Finding,
+  Claim,
+  ChecklistItem,
+  AuditEvent,
+  BenchmarkRun,
+  Alert,
+  Institution,
+  TriangleFinding,
+  ForensicsSuiteData,
+  RiskScoreBreakdown,
+  CheckRun,
+} from '@contracts';
+import {
+  archiveInstitutions,
+  archiveApplications,
+  archiveTriangleFindings,
+  archiveForensicsData,
+  archiveRiskScore,
+  archiveAlerts,
+} from './fixtures/archiveData';
 
 // In-memory mutable states for MSW session
-let applications = [faultedApplication, cleanApplication];
+let applications = [faultedApplication, cleanApplication, ...archiveApplications];
 let findingsMap: Record<string, Finding[]> = {
   [faultedApplication.id]: [...faultedFindings],
   [cleanApplication.id]: [...cleanFindings],
+  'app-101': [...faultedFindings],
 };
 let claimsMap: Record<string, Claim[]> = {
   [faultedApplication.id]: [...faultedClaims],
@@ -103,6 +124,7 @@ let alerts: Alert[] = [
     raisedAt: '2026-10-24T08:06:00Z',
     acknowledged: false,
   },
+  ...archiveAlerts,
 ];
 
 let demoSettings = {
@@ -579,5 +601,80 @@ export const handlers = [
     const alt = alerts.find((a) => a.id === id);
     if (alt) alt.acknowledged = true;
     return HttpResponse.json({ success: true, data: alt });
+  }),
+
+  http.patch('*/api/alerts/:id', async ({ params, request }) => {
+    const { id } = params as { id: string };
+    const body = (await request.json()) as any;
+    const alt = alerts.find((a) => a.id === id);
+    if (alt) {
+      if (body.status === 'RESOLVED' || body.status === 'ACKNOWLEDGED' || body.status === 'FALSE_POSITIVE') {
+        alt.acknowledged = true;
+      }
+      if (body.reason) {
+        (alt as any).resolutionReason = body.reason;
+      }
+    }
+    return HttpResponse.json({ success: true, data: alt });
+  }),
+
+  // --- Institutions ---
+  http.get('*/api/institutions', () => {
+    return HttpResponse.json({
+      success: true,
+      data: archiveInstitutions,
+    });
+  }),
+
+  // --- Triangle of Truth ---
+  http.get('*/api/applications/:id/triangle', () => {
+    return HttpResponse.json({
+      success: true,
+      data: archiveTriangleFindings,
+    });
+  }),
+
+  // --- Forensics Suite ---
+  http.get('*/api/applications/:id/forensics', () => {
+    return HttpResponse.json({
+      success: true,
+      data: archiveForensicsData,
+    });
+  }),
+
+  // --- 5-Pillar Risk Score Breakdown ---
+  http.get('*/api/applications/:id/risk-score', ({ params }) => {
+    const { id } = params as { id: string };
+    return HttpResponse.json({
+      success: true,
+      data: {
+        ...archiveRiskScore,
+        applicationId: id,
+      },
+    });
+  }),
+
+  // --- Automated Scrutiny Check Run ---
+  http.post('*/api/applications/:id/run-checks', async () => {
+    await delay(500);
+    const steps = [
+      { name: 'OCR extraction', status: 'SUCCEEDED' as const },
+      { name: 'PDF revision forensics', status: 'SUCCEEDED' as const },
+      { name: 'ELA tamper analysis', status: 'SUCCEEDED' as const },
+      { name: 'Perceptual image matching', status: 'SUCCEEDED' as const },
+      { name: 'Geofence (500 m) validation', status: 'SUCCEEDED' as const },
+      { name: 'Faculty identity collision check', status: 'SUCCEEDED' as const },
+      { name: 'Architectural blueprint CAD analysis', status: 'SUCCEEDED' as const },
+      { name: 'Records reconciliation', status: 'SUCCEEDED' as const },
+      { name: 'Objective 5-pillar risk calculation', status: 'SUCCEEDED' as const },
+    ];
+    return HttpResponse.json({
+      success: true,
+      data: {
+        runId: `run-${Date.now()}`,
+        status: 'SUCCEEDED',
+        steps,
+      },
+    });
   }),
 ];
