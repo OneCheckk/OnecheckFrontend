@@ -12,6 +12,7 @@ import {
 } from '../../api/queries';
 import { ChecklistPanel } from '../../components/data/ChecklistPanel';
 import { ClaimTable } from '../../components/data/ClaimTable';
+import { TrianglePanel } from '../../components/case/TrianglePanel';
 import { StatusBadge, BandChip, PlaceholderTag, DemoBanner } from '../../components/status';
 import { Button, ErrorState, Skeleton } from '../../components/ui';
 import type { Finding, ClaimRecheckResult } from '@contracts';
@@ -321,6 +322,22 @@ export const InstitutionWorkspacePage: React.FC = () => {
                 </div>
               ))
             )}
+          </div>
+
+          {/* Triangle of Truth 3-Way Reconciliation Section */}
+          <div className="bg-white border border-slate-300 rounded-lg p-5 space-y-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <span>Triangle of Truth: 3-Way Reconciler</span>
+                <span className="text-[10px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                  Self-Audit
+                </span>
+              </h3>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Compare your institution&apos;s self-reported figures against extracted OCR metrics and authoritative AICTE regulatory records.
+              </p>
+            </div>
+            <TrianglePanel applicationId={application.id} />
           </div>
         </div>
       )}

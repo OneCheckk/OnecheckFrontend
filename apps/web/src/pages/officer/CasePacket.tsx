@@ -10,6 +10,7 @@ import {
   useAuditEvents,
   useDispositionFinding,
   useRecordDecision,
+  useRunOfficerChecks,
 } from '../../api/queries';
 import { FindingList } from '../../components/case/FindingList';
 import { FindingDetail } from '../../components/case/FindingDetail';
@@ -18,6 +19,9 @@ import { EvidenceCompare, RecordEvidenceCard } from '../../components/evidence/E
 import { LedgerPanel } from '../../components/data/LedgerPanel';
 import { ValidityTimeline } from '../../components/data/ValidityTimeline';
 import { ClaimTable } from '../../components/data/ClaimTable';
+import { ForensicsPanel } from '../../components/case/ForensicsPanel';
+import { TrianglePanel } from '../../components/case/TrianglePanel';
+import { RiskScorePanel } from '../../components/case/RiskScorePanel';
 import { StatusBadge, BandChip, DemoBanner } from '../../components/status';
 import { Button, Modal, ErrorState, Skeleton } from '../../components/ui';
 import type { Finding, FindingEvidence } from '@contracts';
@@ -32,6 +36,10 @@ import {
   AlertTriangle,
   History,
   FileText,
+  Play,
+  Cpu,
+  Network,
+  BarChart3,
 } from 'lucide-react';
 
 export const OfficerCasePacketPage: React.FC = () => {
@@ -48,6 +56,7 @@ export const OfficerCasePacketPage: React.FC = () => {
 
   const dispositionMutation = useDispositionFinding(id);
   const decisionMutation = useRecordDecision(id);
+  const runChecksMutation = useRunOfficerChecks(id);
 
   // Active Finding & Selected Evidence
   const [selectedFinding, setSelectedFinding] = useState<Finding | undefined>(undefined);
@@ -55,7 +64,10 @@ export const OfficerCasePacketPage: React.FC = () => {
 
   // Bottom Drawer State
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
-  const [drawerTab, setDrawerTab] = useState<'ledger' | 'validity' | 'claims' | 'alerts' | 'audit'>('ledger');
+  const [drawerTab, setDrawerTab] = useState<
+    'ledger' | 'validity' | 'claims' | 'alerts' | 'audit' | 'forensics' | 'triangle' | 'risk'
+  >('ledger');
+  const [checkRunSuccess, setCheckRunSuccess] = useState<string | null>(null);
 
   // Record Outcome Modal State
   const [showOutcomeModal, setShowOutcomeModal] = useState<boolean>(false);
@@ -187,6 +199,32 @@ export const OfficerCasePacketPage: React.FC = () => {
 
         {/* Action Controls */}
         <div className="flex items-center gap-2">
+          {checkRunSuccess && (
+            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
+              {checkRunSuccess}
+            </span>
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              try {
+                await runChecksMutation.mutateAsync();
+                setCheckRunSuccess('Verification checks completed.');
+                setTimeout(() => setCheckRunSuccess(null), 4000);
+              } catch (e) {
+                alert('Verification check simulation failed to start.');
+              }
+            }}
+            disabled={runChecksMutation.isPending}
+            className="text-xs bg-white text-slate-800"
+            title="Simulate automated verification pipeline"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 mr-1 text-emerald-700" />
+            {runChecksMutation.isPending ? 'Verifying...' : 'Run Checks (Simulated)'}
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -297,24 +335,71 @@ export const OfficerCasePacketPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Drawer (Ledger, Validity, Claims, Alerts, Audit) */}
+      {/* Bottom Drawer (Ledger, Validity, Claims, Alerts, Audit, Forensics, Triangle, Risk) */}
       <div
         data-testid="bottom-drawer"
         className={`bg-white border-t-2 border-slate-400 transition-all duration-200 z-30 shrink-0 flex flex-col ${
-          isDrawerOpen ? 'h-72' : 'h-10'
+          isDrawerOpen ? 'h-[480px]' : 'h-10'
         }`}
       >
         {/* Drawer Header / Tabs */}
         <div className="h-10 px-4 bg-slate-100 border-b border-slate-300 flex items-center justify-between">
-          <div className="flex items-center gap-1 text-xs font-bold">
+          <div className="flex items-center gap-1 text-xs font-bold overflow-x-auto py-1">
+            <button
+              onClick={() => {
+                setDrawerTab('forensics');
+                setIsDrawerOpen(true);
+              }}
+              className={`px-3 py-1 rounded transition-colors flex items-center gap-1.5 ${
+                isDrawerOpen && drawerTab === 'forensics'
+                  ? 'bg-blue-800 text-white shadow-xs'
+                  : 'text-slate-700 hover:text-slate-900 bg-white border border-slate-200'
+              }`}
+            >
+              <Cpu className="w-3.5 h-3.5 text-sky-600" />
+              Forensics Suite
+            </button>
+
+            <button
+              onClick={() => {
+                setDrawerTab('triangle');
+                setIsDrawerOpen(true);
+              }}
+              className={`px-3 py-1 rounded transition-colors flex items-center gap-1.5 ${
+                isDrawerOpen && drawerTab === 'triangle'
+                  ? 'bg-blue-800 text-white shadow-xs'
+                  : 'text-slate-700 hover:text-slate-900 bg-white border border-slate-200'
+              }`}
+            >
+              <Network className="w-3.5 h-3.5 text-indigo-600" />
+              Triangle of Truth
+            </button>
+
+            <button
+              onClick={() => {
+                setDrawerTab('risk');
+                setIsDrawerOpen(true);
+              }}
+              className={`px-3 py-1 rounded transition-colors flex items-center gap-1.5 ${
+                isDrawerOpen && drawerTab === 'risk'
+                  ? 'bg-blue-800 text-white shadow-xs'
+                  : 'text-slate-700 hover:text-slate-900 bg-white border border-slate-200'
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5 text-amber-600" />
+              5-Pillar Risk
+            </button>
+
+            <span className="h-4 w-px bg-slate-300 mx-1" />
+
             <button
               onClick={() => {
                 setDrawerTab('ledger');
                 setIsDrawerOpen(true);
               }}
-              className={`px-3 py-1 rounded transition-colors ${
+              className={`px-2.5 py-1 rounded transition-colors ${
                 isDrawerOpen && drawerTab === 'ledger'
-                  ? 'bg-white text-blue-900 shadow-2xs'
+                  ? 'bg-white text-blue-900 font-bold border border-slate-300'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -326,9 +411,9 @@ export const OfficerCasePacketPage: React.FC = () => {
                 setDrawerTab('validity');
                 setIsDrawerOpen(true);
               }}
-              className={`px-3 py-1 rounded transition-colors ${
+              className={`px-2.5 py-1 rounded transition-colors ${
                 isDrawerOpen && drawerTab === 'validity'
-                  ? 'bg-white text-blue-900 shadow-2xs'
+                  ? 'bg-white text-blue-900 font-bold border border-slate-300'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -340,9 +425,9 @@ export const OfficerCasePacketPage: React.FC = () => {
                 setDrawerTab('claims');
                 setIsDrawerOpen(true);
               }}
-              className={`px-3 py-1 rounded transition-colors ${
+              className={`px-2.5 py-1 rounded transition-colors ${
                 isDrawerOpen && drawerTab === 'claims'
-                  ? 'bg-white text-blue-900 shadow-2xs'
+                  ? 'bg-white text-blue-900 font-bold border border-slate-300'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -354,9 +439,9 @@ export const OfficerCasePacketPage: React.FC = () => {
                 setDrawerTab('alerts');
                 setIsDrawerOpen(true);
               }}
-              className={`px-3 py-1 rounded transition-colors ${
+              className={`px-2.5 py-1 rounded transition-colors ${
                 isDrawerOpen && drawerTab === 'alerts'
-                  ? 'bg-white text-blue-900 shadow-2xs'
+                  ? 'bg-white text-blue-900 font-bold border border-slate-300'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -368,9 +453,9 @@ export const OfficerCasePacketPage: React.FC = () => {
                 setDrawerTab('audit');
                 setIsDrawerOpen(true);
               }}
-              className={`px-3 py-1 rounded transition-colors ${
+              className={`px-2.5 py-1 rounded transition-colors ${
                 isDrawerOpen && drawerTab === 'audit'
-                  ? 'bg-white text-blue-900 shadow-2xs'
+                  ? 'bg-white text-blue-900 font-bold border border-slate-300'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -380,7 +465,7 @@ export const OfficerCasePacketPage: React.FC = () => {
 
           <button
             onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-            className="p-1 text-slate-500 hover:text-slate-800 flex items-center gap-1 text-xs font-semibold"
+            className="p-1 text-slate-500 hover:text-slate-800 flex items-center gap-1 text-xs font-semibold shrink-0"
           >
             <span>{isDrawerOpen ? 'Collapse Drawer' : 'Expand Drawer'}</span>
             {isDrawerOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
@@ -390,6 +475,21 @@ export const OfficerCasePacketPage: React.FC = () => {
         {/* Drawer Body */}
         {isDrawerOpen && (
           <div className="flex-1 p-4 overflow-y-auto text-xs bg-slate-50/50">
+            {drawerTab === 'forensics' && (
+              <div className="h-full">
+                <ForensicsPanel applicationId={application.id} />
+              </div>
+            )}
+            {drawerTab === 'triangle' && (
+              <div className="h-full">
+                <TrianglePanel applicationId={application.id} />
+              </div>
+            )}
+            {drawerTab === 'risk' && (
+              <div className="h-full">
+                <RiskScorePanel applicationId={application.id} />
+              </div>
+            )}
             {drawerTab === 'ledger' && <LedgerPanel entries={ledger} />}
             {drawerTab === 'validity' && (
               <ValidityTimeline applicationId={application.id} records={validity} />

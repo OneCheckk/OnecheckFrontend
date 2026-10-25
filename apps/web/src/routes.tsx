@@ -18,6 +18,7 @@ import { InstitutionWorkspacePage } from './pages/institution/Workspace';
 import { OfficerQueuePage } from './pages/officer/Queue';
 import { OfficerCasePacketPage } from './pages/officer/CasePacket';
 import { DeficiencyLettersPage } from './pages/officer/Letters';
+import { AlertsQueuePage } from './pages/officer/AlertsQueue';
 
 // Admin & Audit & Benchmark Pages
 import { AdminRulepacksPage } from './pages/admin/Rulepacks';
@@ -84,6 +85,14 @@ export const AppRoutes: React.FC = () => {
           element={
             <RequireRole roles={['SCRUTINY_OFFICER', 'REGIONAL_DIRECTOR']}>
               <DeficiencyLettersPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/alerts"
+          element={
+            <RequireRole roles={['SCRUTINY_OFFICER', 'REGIONAL_DIRECTOR', 'ADMIN']}>
+              <AlertsQueuePage />
             </RequireRole>
           }
         />

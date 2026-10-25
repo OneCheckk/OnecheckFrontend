@@ -135,6 +135,20 @@ export const AppLayout: React.FC = () => {
                   </NavLink>
 
                   <NavLink
+                    to="/alerts"
+                    className={({ isActive }) =>
+                      `px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors ${
+                        isActive
+                          ? 'bg-blue-50/80 text-[#005ea2] font-bold border border-blue-200'
+                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                      }`
+                    }
+                  >
+                    <Bell className="w-3.5 h-3.5" />
+                    <span>Alerts Queue</span>
+                  </NavLink>
+
+                  <NavLink
                     to="/benchmark"
                     className={({ isActive }) =>
                       `px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors ${
