@@ -5,7 +5,8 @@ import './styles/tokens.css';
 import { initMocks } from './mocks/browser';
 
 async function prepareApp() {
-  if (import.meta.env.VITE_USE_MOCKS === 'true' || import.meta.env.DEV) {
+  const useMocks = import.meta.env.VITE_USE_MOCKS === 'true';
+  if (useMocks) {
     try {
       await initMocks();
     } catch (err) {
