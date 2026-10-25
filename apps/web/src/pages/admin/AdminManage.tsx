@@ -68,6 +68,18 @@ export const AdminUsersPage: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-slate-200">
             <tr className="hover:bg-slate-50">
+              <td className="py-3 px-4 font-bold text-slate-900">Dr. R. K. Sharma</td>
+              <td className="py-3 px-4 font-mono text-slate-600">institution@apex-tech.edu.in</td>
+              <td className="py-3 px-4 font-mono font-bold text-amber-800">INSTITUTION</td>
+              <td className="py-3 px-4">Apex Institute of Technology</td>
+            </tr>
+            <tr className="hover:bg-slate-50">
+              <td className="py-3 px-4 font-bold text-slate-900">Prof. M. K. Kulkarni</td>
+              <td className="py-3 px-4 font-mono text-slate-600">institution@century-poly.edu.in</td>
+              <td className="py-3 px-4 font-mono font-bold text-amber-800">INSTITUTION</td>
+              <td className="py-3 px-4">Century Institute of Technology</td>
+            </tr>
+            <tr className="hover:bg-slate-50">
               <td className="py-3 px-4 font-bold text-slate-900">Shri V. S. Rao</td>
               <td className="py-3 px-4 font-mono text-slate-600">officer.rao@aicte.gov.in</td>
               <td className="py-3 px-4 font-mono font-bold text-blue-900">SCRUTINY_OFFICER</td>

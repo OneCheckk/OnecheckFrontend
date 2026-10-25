@@ -21,6 +21,7 @@ import { DeficiencyLettersPage } from './pages/officer/Letters';
 import { AlertsQueuePage } from './pages/officer/AlertsQueue';
 
 // Admin & Audit & Benchmark Pages
+import { AdminInstitutionsPage } from './pages/admin/Institutions';
 import { AdminRulepacksPage } from './pages/admin/Rulepacks';
 import { AdminChecklistsPage, AdminUsersPage } from './pages/admin/AdminManage';
 import { AuditPage } from './pages/audit/Audit';
@@ -98,6 +99,18 @@ export const AppRoutes: React.FC = () => {
         />
 
         {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={<Navigate to="/admin/institutions" replace />}
+        />
+        <Route
+          path="/admin/institutions"
+          element={
+            <RequireRole roles={['ADMIN']}>
+              <AdminInstitutionsPage />
+            </RequireRole>
+          }
+        />
         <Route
           path="/admin/rulepacks"
           element={

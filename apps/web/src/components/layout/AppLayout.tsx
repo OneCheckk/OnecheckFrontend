@@ -18,6 +18,7 @@ import {
   WifiOff,
   Bell,
   CheckCircle,
+  Building2,
 } from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
@@ -186,6 +187,20 @@ export const AppLayout: React.FC = () => {
               {/* Admin Configuration Links */}
               {user?.role === 'ADMIN' && (
                 <>
+                  <NavLink
+                    to="/admin/institutions"
+                    className={({ isActive }) =>
+                      `px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors ${
+                        isActive
+                          ? 'bg-blue-50/80 text-[#005ea2] font-bold border border-blue-200'
+                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                      }`
+                    }
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>Institutions</span>
+                  </NavLink>
+
                   <NavLink
                     to="/admin/rulepacks"
                     className={({ isActive }) =>
