@@ -1,0 +1,283 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from './client';
+import type {
+  Application,
+  ChecklistItem,
+  Claim,
+  Finding,
+  LedgerEntry,
+  ValidityRecord,
+  DeficiencyLetter,
+  AuditEvent,
+  BenchmarkRun,
+  Alert,
+  OfficerDashboardSummary,
+  ClaimRecheckResult,
+} from '@contracts';
+
+// Canonical TanStack Query Key Factories
+export const queryKeys = {
+  apps: (filters?: Record<string, any>) => ['apps', filters] as const,
+  app: (id: string) => ['app', id] as const,
+  claims: (id: string) => ['claims', id] as const,
+  findings: (id: string) => ['findings', id] as const,
+  ledger: (id: string) => ['ledger', id] as const,
+  docs: (id: string) => ['docs', id] as const,
+  alerts: () => ['alerts'] as const,
+  audit: (filters?: Record<string, any>) => ['audit', filters] as const,
+  bench: (runId?: string) => ['bench', runId] as const,
+  dashboardOfficer: () => ['dashboard', 'officer'] as const,
+  categories: () => ['categories'] as const,
+  demoSettings: () => ['demo', 'settings'] as const,
+};
+
+// --- Applications Queries ---
+
+export const useApplications = (filters?: { band?: string; status?: string; search?: string }) => {
+  return useQuery({
+    queryKey: queryKeys.apps(filters),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: Application[] }>('/applications', {
+        params: filters,
+      });
+      return res.data.data;
+    },
+  });
+};
+
+export const useApplication = (id: string) => {
+  return useQuery({
+    queryKey: queryKeys.app(id),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: Application }>(`/applications/${id}`);
+      return res.data.data;
+    },
+    enabled: !!id,
+  });
+};
+
+export const useApplicationChecklist = (id: string) => {
+  return useQuery({
+    queryKey: queryKeys.docs(id),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: ChecklistItem[] }>(`/applications/${id}/documents`);
+      return res.data.data;
+    },
+    enabled: !!id,
+  });
+};
+
+export const useClaims = (applicationId: string) => {
+  return useQuery({
+    queryKey: queryKeys.claims(applicationId),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: Claim[] }>(`/applications/${applicationId}/claims`);
+      return res.data.data;
+    },
+    enabled: !!applicationId,
+  });
+};
+
+export const useFindings = (applicationId: string, filters?: { status?: string; severity?: string; state?: string }) => {
+  return useQuery({
+    queryKey: queryKeys.findings(applicationId),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: Finding[] }>(`/applications/${applicationId}/findings`, {
+        params: filters,
+      });
+      return res.data.data;
+    },
+    enabled: !!applicationId,
+  });
+};
+
+export const useLedger = (applicationId: string) => {
+  return useQuery({
+    queryKey: queryKeys.ledger(applicationId),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: LedgerEntry[] }>(`/applications/${applicationId}/ledger`);
+      return res.data.data;
+    },
+    enabled: !!applicationId,
+  });
+};
+
+export const useValidity = (applicationId: string) => {
+  return useQuery({
+    queryKey: ['validity', applicationId],
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: ValidityRecord[] }>(`/applications/${applicationId}/validity`);
+      return res.data.data;
+    },
+    enabled: !!applicationId,
+  });
+};
+
+export const useOfficerDashboard = () => {
+  return useQuery({
+    queryKey: queryKeys.dashboardOfficer(),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: OfficerDashboardSummary }>('/dashboard/officer');
+      return res.data.data;
+    },
+  });
+};
+
+export const useCategories = () => {
+  return useQuery({
+    queryKey: queryKeys.categories(),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: { id: string; name: string; checklistCount: number }[] }>('/categories');
+      return res.data.data;
+    },
+  });
+};
+
+export const useAlerts = () => {
+  return useQuery({
+    queryKey: queryKeys.alerts(),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: Alert[] }>('/alerts');
+      return res.data.data;
+    },
+  });
+};
+
+export const useAuditEvents = (filters?: { entityId?: string; action?: string }) => {
+  return useQuery({
+    queryKey: queryKeys.audit(filters),
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: AuditEvent[] }>('/audit', { params: filters });
+      return res.data.data;
+    },
+  });
+};
+
+export const useDeficiencyLetters = (applicationId: string) => {
+  return useQuery({
+    queryKey: ['letters', applicationId],
+    queryFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: DeficiencyLetter[] }>(`/applications/${applicationId}/letters`);
+      return res.data.data;
+    },
+    enabled: !!applicationId,
+  });
+};
+
+// --- Mutations ---
+
+export const useCreateApplication = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { category: string; institutionName: string }) => {
+      const res = await apiClient.post<{ success: boolean; data: Application }>('/applications', payload);
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apps'] });
+    },
+  });
+};
+
+export const useRunSelfCheck = (applicationId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.post<{ success: boolean; data: { findings: Finding[] } }>(`/applications/${applicationId}/self-check`);
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.app(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.findings(applicationId) });
+    },
+  });
+};
+
+export const useCorrectClaim = (applicationId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ claimId, value, reason }: { claimId: string; value: string | number; reason: string }) => {
+      const res = await apiClient.patch<{ success: boolean; data: ClaimRecheckResult }>(`/claims/${claimId}`, {
+        value,
+        reason,
+      });
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.claims(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.findings(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.app(applicationId) });
+    },
+  });
+};
+
+export const useConfirmClaim = (applicationId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ claimId }: { claimId: string }) => {
+      const res = await apiClient.patch<{ success: boolean; data: Claim }>(`/claims/${claimId}/confirm`);
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.claims(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.app(applicationId) });
+    },
+  });
+};
+
+export const useDispositionFinding = (applicationId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ findingId, state, reason }: { findingId: string; state: string; reason?: string }) => {
+      const res = await apiClient.post<{ success: boolean; data: Finding }>(`/findings/${findingId}/disposition`, {
+        state,
+        reason,
+      });
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.findings(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.app(applicationId) });
+    },
+  });
+};
+
+export const useRecordDecision = (applicationId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ outcome, reason }: { outcome: string; reason?: string }) => {
+      const res = await apiClient.post<{ success: boolean; data: Application }>(`/applications/${applicationId}/decision`, {
+        outcome,
+        reason,
+      });
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.app(applicationId) });
+      queryClient.invalidateQueries({ queryKey: ['apps'] });
+    },
+  });
+};
+
+export const useSendDeficiencyLetter = (applicationId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { findingIds: string[]; content: string }) => {
+      const res = await apiClient.post<{ success: boolean; data: DeficiencyLetter }>(`/applications/${applicationId}/letters`, payload);
+      return res.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['letters', applicationId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.findings(applicationId) });
+    },
+  });
+};
+
+export const useVerifyAuditChain = () => {
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.get<{ success: boolean; data: { intact: boolean; verifiedCount: number; brokenAtSeq?: number } }>('/audit/verify');
+      return res.data.data;
+    },
+  });
+};
