@@ -83,7 +83,7 @@ export const AppLayout: React.FC = () => {
             {/* Role-Gated Navigation Links - Refined institutional tab style */}
             <nav className="hidden md:flex items-center gap-1.5 text-xs font-semibold">
               {/* Institution Links */}
-              {user?.role === 'INSTITUTION' && (
+              {(user?.role === 'INSTITUTION' || user?.role === 'INSTITUTION_USER') && (
                 <>
                   <NavLink
                     to="/portal"
@@ -117,7 +117,9 @@ export const AppLayout: React.FC = () => {
               )}
 
               {/* Officer / Director Links */}
-              {(user?.role === 'SCRUTINY_OFFICER' || user?.role === 'REGIONAL_DIRECTOR') && (
+              {(user?.role === 'SCRUTINY_OFFICER' ||
+                user?.role === 'REGIONAL_DIRECTOR' ||
+                user?.role === 'OFFICER') && (
                 <>
                   <NavLink
                     to="/review"

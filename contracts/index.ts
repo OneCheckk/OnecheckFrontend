@@ -33,7 +33,9 @@ export type ApplicationStatus =
 export type UserRole =
   | 'PUBLIC'
   | 'INSTITUTION'
+  | 'INSTITUTION_USER'
   | 'SCRUTINY_OFFICER'
+  | 'OFFICER'
   | 'REGIONAL_DIRECTOR'
   | 'ADMIN'
   | 'AUDITOR';
