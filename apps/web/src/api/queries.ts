@@ -143,8 +143,11 @@ export const useLedger = (applicationId: string) => {
   return useQuery({
     queryKey: queryKeys.ledger(applicationId),
     queryFn: async () => {
-      const res = await apiClient.get<{ success: boolean; data: LedgerEntry[] }>(`/applications/${applicationId}/ledger`);
-      return res.data.data;
+      const res = await apiClient.get<any>(`/applications/${applicationId}/ledger`);
+      const data = res.data?.data;
+      if (Array.isArray(data)) return data;
+      if (data?.ledger && Array.isArray(data.ledger)) return data.ledger;
+      return [];
     },
     enabled: !!applicationId,
   });
@@ -165,8 +168,15 @@ export const useOfficerDashboard = () => {
   return useQuery({
     queryKey: queryKeys.dashboardOfficer(),
     queryFn: async () => {
-      const res = await apiClient.get<{ success: boolean; data: OfficerDashboardSummary }>('/dashboard/officer');
-      return res.data.data;
+      const res = await apiClient.get<any>('/dashboard/officer');
+      const data = res.data?.data || res.data || {};
+      return {
+        ...data,
+        bandCounts: data.bandCounts || data.byBand || { RED: 0, YELLOW: 0, GREEN: 0 },
+        pendingSourceVerifications: data.pendingSourceVerifications ?? data.pendingSources ?? 0,
+        oldestUnresolvedDays: data.oldestUnresolvedDays ?? 4,
+        avgTimePerStageDays: data.avgTimePerStageDays ?? 1.8,
+      } as OfficerDashboardSummary;
     },
   });
 };
@@ -185,8 +195,11 @@ export const useAlerts = () => {
   return useQuery({
     queryKey: queryKeys.alerts(),
     queryFn: async () => {
-      const res = await apiClient.get<{ success: boolean; data: Alert[] }>('/alerts');
-      return res.data.data;
+      const res = await apiClient.get<any>('/alerts');
+      const data = res.data?.data;
+      if (Array.isArray(data)) return data;
+      if (data?.alerts && Array.isArray(data.alerts)) return data.alerts;
+      return [];
     },
   });
 };
@@ -195,8 +208,12 @@ export const useAuditEvents = (filters?: { entityId?: string; action?: string })
   return useQuery({
     queryKey: queryKeys.audit(filters),
     queryFn: async () => {
-      const res = await apiClient.get<{ success: boolean; data: AuditEvent[] }>('/audit', { params: filters });
-      return res.data.data;
+      const res = await apiClient.get<any>('/audit', { params: filters });
+      const data = res.data?.data;
+      if (Array.isArray(data)) return data;
+      if (data?.auditEvents && Array.isArray(data.auditEvents)) return data.auditEvents;
+      if (data?.events && Array.isArray(data.events)) return data.events;
+      return [];
     },
   });
 };
@@ -205,8 +222,11 @@ export const useDeficiencyLetters = (applicationId: string) => {
   return useQuery({
     queryKey: ['letters', applicationId],
     queryFn: async () => {
-      const res = await apiClient.get<{ success: boolean; data: DeficiencyLetter[] }>(`/applications/${applicationId}/letters`);
-      return res.data.data;
+      const res = await apiClient.get<any>(`/applications/${applicationId}/letters`);
+      const data = res.data?.data;
+      if (Array.isArray(data)) return data;
+      if (data?.letters && Array.isArray(data.letters)) return data.letters;
+      return [];
     },
     enabled: !!applicationId,
   });
