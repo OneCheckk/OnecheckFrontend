@@ -79,3 +79,22 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* National Tricolor Card Border Styles */
+.card-tricolor {
+  position: relative;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1.5px solid transparent;
+  background-image: linear-gradient(#ffffff, #ffffff), linear-gradient(135deg, #FF9933 0%, #cbd5e1 50%, #138808 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.card-tricolor:hover {
+  background-image: linear-gradient(#ffffff, #ffffff), linear-gradient(135deg, #FF9933 0%, #94a3b8 50%, #138808 100%);
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+}

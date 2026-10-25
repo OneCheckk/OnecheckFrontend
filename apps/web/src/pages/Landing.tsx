@@ -62,7 +62,7 @@ export const LandingPage: React.FC = () => {
         </div>
       </header>
 
-      {/* Hero Section - Full width background with centered content (NO card container) */}
+      {/* Hero Section - Perfectly centered, authoritative institutional presentation */}
       <section className="relative min-h-[calc(100svh-4rem)] flex items-center justify-center overflow-hidden border-b border-slate-200">
         {/* Sharp Background Image spanning full viewport */}
         <div className="absolute inset-0 z-0">
@@ -73,13 +73,13 @@ export const LandingPage: React.FC = () => {
           />
         </div>
 
-        {/* Centered Hero Content directly on background */}
-        <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full flex flex-col items-center justify-center text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-[#0b2545] tracking-tight mb-4 drop-shadow-[0_2px_12px_rgba(255,255,255,0.95)]">
+        {/* Centered Hero Content with professional optical balance */}
+        <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 w-full flex flex-col items-center justify-center text-center">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-[#0b2545] tracking-tight mb-4 drop-shadow-[0_2px_14px_rgba(255,255,255,0.95)]">
             ONECHECK
           </h1>
 
-          <p className="text-sm sm:text-base text-slate-800 font-medium max-w-2xl mx-auto leading-relaxed mb-8 drop-shadow-[0_1px_8px_rgba(255,255,255,0.95)]">
+          <p className="text-sm sm:text-base md:text-lg text-slate-800 font-medium max-w-2xl mx-auto leading-relaxed mb-8 drop-shadow-[0_1px_8px_rgba(255,255,255,0.95)]">
             Automated documentary cross-verification and regulatory compliance scrutiny for technical education institutions under AICTE Approval Process Handbook norms.
           </p>
 
@@ -139,8 +139,15 @@ export const LandingPage: React.FC = () => {
       {/* The Vision Section - Structured, clean institutional presentation */}
       <section id="vision" className="py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-          <div className="md:col-span-5 bg-white border border-slate-200 rounded-lg p-6 shadow-2xs text-center flex flex-col items-center">
-            <img src="/assets/logo2.png" alt="OneCheck Logo" className="h-14 w-auto mb-3" />
+          <div className="md:col-span-5 card-tricolor p-6 text-center flex flex-col items-center">
+            {/* National Tricolor Top Border Accent */}
+            <div className="absolute top-0 left-0 right-0 h-[3.5px] flex" aria-hidden="true">
+              <div className="w-1/3 bg-[#FF9933]" />
+              <div className="w-1/3 bg-slate-200" />
+              <div className="w-1/3 bg-[#138808]" />
+            </div>
+
+            <img src="/assets/logo2.png" alt="OneCheck Logo" className="h-14 w-auto mb-3 mt-1" />
             <h3 className="font-bold text-lg text-[#0b2545] mb-0.5">ONECHECK</h3>
             <span className="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wider mb-3">
               Automated Regulatory Scrutiny
@@ -171,7 +178,7 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Key Metrics Section - Restrained institutional typography */}
+      {/* Key Metrics Section - Tricolor bordered cards */}
       <section id="engine" className="py-12 bg-slate-100/70 border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <span className="text-xs font-bold uppercase tracking-wider text-[#005ea2] block mb-1">
@@ -184,26 +191,41 @@ export const LandingPage: React.FC = () => {
             OneCheck provides automated, evidence-backed verification before statutory review by authorized scrutiny officers.
           </p>
 
-          {/* 3 Balanced Metric Cards */}
+          {/* 3 Metric Cards with Tricolor borders */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
-            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs text-center">
-              <span className="text-3xl font-extrabold text-[#0b2545] block mb-1 font-mono">100%</span>
+            <div className="card-tricolor p-5 text-center">
+              <div className="absolute top-0 left-0 right-0 h-[3.5px] flex" aria-hidden="true">
+                <div className="w-1/3 bg-[#FF9933]" />
+                <div className="w-1/3 bg-slate-200" />
+                <div className="w-1/3 bg-[#138808]" />
+              </div>
+              <span className="text-3xl font-extrabold text-[#0b2545] block mb-1 font-mono pt-1">100%</span>
               <span className="text-xs font-bold text-slate-800 uppercase tracking-wide block">
                 Evidence Traceability
               </span>
               <p className="text-[11px] text-slate-500 mt-1">Every finding points to normalized coordinate bounding boxes</p>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs text-center">
-              <span className="text-3xl font-extrabold text-[#005ea2] block mb-1 font-mono">194+</span>
+            <div className="card-tricolor p-5 text-center">
+              <div className="absolute top-0 left-0 right-0 h-[3.5px] flex" aria-hidden="true">
+                <div className="w-1/3 bg-[#FF9933]" />
+                <div className="w-1/3 bg-slate-200" />
+                <div className="w-1/3 bg-[#138808]" />
+              </div>
+              <span className="text-3xl font-extrabold text-[#005ea2] block mb-1 font-mono pt-1">194+</span>
               <span className="text-xs font-bold text-slate-800 uppercase tracking-wide block">
                 Handbook Norm Rules
               </span>
               <p className="text-[11px] text-slate-500 mt-1">Full GFR and AICTE Approval Process Handbook compliance</p>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs text-center">
-              <span className="text-3xl font-extrabold text-[#0b2545] block mb-1 font-mono">0%</span>
+            <div className="card-tricolor p-5 text-center">
+              <div className="absolute top-0 left-0 right-0 h-[3.5px] flex" aria-hidden="true">
+                <div className="w-1/3 bg-[#FF9933]" />
+                <div className="w-1/3 bg-slate-200" />
+                <div className="w-1/3 bg-[#138808]" />
+              </div>
+              <span className="text-3xl font-extrabold text-[#0b2545] block mb-1 font-mono pt-1">0%</span>
               <span className="text-xs font-bold text-slate-800 uppercase tracking-wide block">
                 Subjective Guesswork
               </span>
@@ -213,7 +235,7 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Core Capabilities Grid - Restrained, unified institutional cards without rainbow borders */}
+      {/* Core Capabilities Grid - All cards with Tricolor borders */}
       <section id="capabilities" className="py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="text-center mb-10">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
@@ -229,8 +251,13 @@ export const LandingPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {/* Card 1 */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs hover:border-slate-300 transition-colors">
-            <div className="w-9 h-9 rounded-md bg-blue-50 text-[#005ea2] flex items-center justify-center mb-3">
+          <div className="card-tricolor p-5 text-left">
+            <div className="absolute top-0 left-0 right-0 h-[3.5px] flex" aria-hidden="true">
+              <div className="w-1/3 bg-[#FF9933]" />
+              <div className="w-1/3 bg-slate-200" />
+              <div className="w-1/3 bg-[#138808]" />
+            </div>
+            <div className="w-9 h-9 rounded-md bg-blue-50 text-[#005ea2] flex items-center justify-center mb-3 mt-1">
               <Cpu className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-slate-900 mb-1.5">Automated Scrutiny Engine</h3>
@@ -240,8 +267,13 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Card 2 */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs hover:border-slate-300 transition-colors">
-            <div className="w-9 h-9 rounded-md bg-blue-50 text-[#005ea2] flex items-center justify-center mb-3">
+          <div className="card-tricolor p-5 text-left">
+            <div className="absolute top-0 left-0 right-0 h-[3.5px] flex" aria-hidden="true">
+              <div className="w-1/3 bg-[#FF9933]" />
+              <div className="w-1/3 bg-slate-200" />
+              <div className="w-1/3 bg-[#138808]" />
+            </div>
+            <div className="w-9 h-9 rounded-md bg-blue-50 text-[#005ea2] flex items-center justify-center mb-3 mt-1">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-slate-900 mb-1.5">Verification Ledger</h3>
@@ -251,8 +283,13 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Card 3 */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs hover:border-slate-300 transition-colors">
-            <div className="w-9 h-9 rounded-md bg-blue-50 text-[#005ea2] flex items-center justify-center mb-3">
+          <div className="card-tricolor p-5 text-left">
+            <div className="absolute top-0 left-0 right-0 h-[3.5px] flex" aria-hidden="true">
+              <div className="w-1/3 bg-[#FF9933]" />
+              <div className="w-1/3 bg-slate-200" />
+              <div className="w-1/3 bg-[#138808]" />
+            </div>
+            <div className="w-9 h-9 rounded-md bg-blue-50 text-[#005ea2] flex items-center justify-center mb-3 mt-1">
               <Layers className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-slate-900 mb-1.5">Document Forensics</h3>
@@ -262,8 +299,13 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Card 4 */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs hover:border-slate-300 transition-colors">
-            <div className="w-9 h-9 rounded-md bg-blue-50 text-[#005ea2] flex items-center justify-center mb-3">
+          <div className="card-tricolor p-5 text-left">
+            <div className="absolute top-0 left-0 right-0 h-[3.5px] flex" aria-hidden="true">
+              <div className="w-1/3 bg-[#FF9933]" />
+              <div className="w-1/3 bg-slate-200" />
+              <div className="w-1/3 bg-[#138808]" />
+            </div>
+            <div className="w-9 h-9 rounded-md bg-blue-50 text-[#005ea2] flex items-center justify-center mb-3 mt-1">
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-slate-900 mb-1.5">Institutional Self-Check</h3>
@@ -273,8 +315,13 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Card 5 */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs hover:border-slate-300 transition-colors">
-            <div className="w-9 h-9 rounded-md bg-blue-50 text-[#005ea2] flex items-center justify-center mb-3">
+          <div className="card-tricolor p-5 text-left">
+            <div className="absolute top-0 left-0 right-0 h-[3.5px] flex" aria-hidden="true">
+              <div className="w-1/3 bg-[#FF9933]" />
+              <div className="w-1/3 bg-slate-200" />
+              <div className="w-1/3 bg-[#138808]" />
+            </div>
+            <div className="w-9 h-9 rounded-md bg-blue-50 text-[#005ea2] flex items-center justify-center mb-3 mt-1">
               <Scale className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-slate-900 mb-1.5">TER Fee Reconciliation</h3>
@@ -284,8 +331,13 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Card 6 */}
-          <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-2xs hover:border-slate-300 transition-colors">
-            <div className="w-9 h-9 rounded-md bg-blue-50 text-[#005ea2] flex items-center justify-center mb-3">
+          <div className="card-tricolor p-5 text-left">
+            <div className="absolute top-0 left-0 right-0 h-[3.5px] flex" aria-hidden="true">
+              <div className="w-1/3 bg-[#FF9933]" />
+              <div className="w-1/3 bg-slate-200" />
+              <div className="w-1/3 bg-[#138808]" />
+            </div>
+            <div className="w-9 h-9 rounded-md bg-blue-50 text-[#005ea2] flex items-center justify-center mb-3 mt-1">
               <FileCheck2 className="w-5 h-5" />
             </div>
             <h3 className="text-sm font-bold text-slate-900 mb-1.5">Immutable Audit Chain</h3>
@@ -298,16 +350,23 @@ export const LandingPage: React.FC = () => {
 
       {/* Digital Public Infrastructure Section */}
       <section id="governance" className="py-12 bg-slate-50 border-t border-slate-200">
-        <div className="max-w-3xl mx-auto px-4 text-center">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1">
-            Digital Public Infrastructure
-          </span>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-[#0b2545] mb-2 tracking-tight">
-            Our Statutory Commitment
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-            Built as scalable <strong>Digital Public Infrastructure (DPI)</strong> for technical education governance in collaboration with AICTE and state regulatory authorities conforming to Standard GFR Rule 194.
-          </p>
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="card-tricolor p-6 sm:p-8 text-center">
+            <div className="absolute top-0 left-0 right-0 h-[3.5px] flex" aria-hidden="true">
+              <div className="w-1/3 bg-[#FF9933]" />
+              <div className="w-1/3 bg-slate-200" />
+              <div className="w-1/3 bg-[#138808]" />
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-1 pt-1">
+              Digital Public Infrastructure
+            </span>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-[#0b2545] mb-2 tracking-tight">
+              Our Statutory Commitment
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
+              Built as scalable <strong>Digital Public Infrastructure (DPI)</strong> for technical education governance in collaboration with AICTE and state regulatory authorities conforming to Standard GFR Rule 194.
+            </p>
+          </div>
         </div>
       </section>
 
