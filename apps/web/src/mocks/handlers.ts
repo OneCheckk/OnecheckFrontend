@@ -127,6 +127,34 @@ let alerts: Alert[] = [
   ...archiveAlerts,
 ];
 
+let benchmarkRuns: BenchmarkRun[] = [
+  {
+    runId: 'bench-2026-run-001',
+    timestamp: '2026-10-24T06:00:00Z',
+    n: 100,
+    seed: 42,
+    faultRate: 0.35,
+    scanRatio: 0.4,
+    manifestHash: 'sha256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    status: 'COMPLETED',
+    results: {
+      extractionAccuracy: 99.4,
+      validationAccuracy: 99.1,
+      cleanAppFalsePositiveRate: 0.0,
+      avgVerificationTimeSec: 1.2,
+      scanVsTextAccuracy: { scan: 98.7, text: 99.8 },
+      alertTimelinessMin: 4.8,
+      perFault: [
+        { faultType: 'AREA_MISMATCH', precision: 1.0, recall: 0.98, f1: 0.99, tp: 34, fp: 0, fn: 1 },
+        { faultType: 'FACULTY_INTAKE', precision: 0.97, recall: 1.0, f1: 0.98, tp: 28, fp: 1, fn: 0 },
+        { faultType: 'TER_PAYMENT', precision: 1.0, recall: 1.0, f1: 1.0, tp: 22, fp: 0, fn: 0 },
+        { faultType: 'NOC_VALIDITY', precision: 1.0, recall: 0.96, f1: 0.98, tp: 25, fp: 0, fn: 1 },
+        { faultType: 'DOC_FORENSICS', precision: 0.95, recall: 0.92, f1: 0.93, tp: 19, fp: 1, fn: 2 },
+      ],
+    },
+  },
+];
+
 let demoSettings = {
   enabled: true,
   decisionDateOffsetDays: 0,
@@ -135,11 +163,25 @@ let demoSettings = {
 
 let auditTampered = false;
 
+// Helper to register both relative '/api/...' and wildcard '*/api/...' paths with explicit any signature
+function route(
+  method: 'get' | 'post' | 'put' | 'patch' | 'delete',
+  path: string,
+  resolver: (info: any) => any
+) {
+  const normPath = path.startsWith('/') ? path : `/${path}`;
+  const apiPath = normPath.startsWith('/api/') ? normPath : `/api${normPath}`;
+  return [
+    http[method](apiPath, resolver as any),
+    http[method](`*${apiPath}`, resolver as any),
+  ];
+}
+
 export const handlers = [
   // --- Auth Handlers ---
-  http.post('*/api/auth/login', async ({ request }) => {
-    const body = (await request.json()) as any;
-    const { email } = body;
+  ...route('post', '/api/auth/login', async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as any;
+    const email = body.email || '';
 
     let role = 'INSTITUTION';
     let name = 'Institutional Officer';
@@ -172,7 +214,7 @@ export const handlers = [
   }),
 
   // --- Dashboard Officer ---
-  http.get('*/api/dashboard/officer', () => {
+  ...route('get', '/api/dashboard/officer', () => {
     return HttpResponse.json({
       success: true,
       data: {
@@ -189,7 +231,7 @@ export const handlers = [
   }),
 
   // --- Applications ---
-  http.get('*/api/applications', ({ request }) => {
+  ...route('get', '/api/applications', ({ request }) => {
     const url = new URL(request.url);
     const band = url.searchParams.get('band');
     const search = url.searchParams.get('search');
@@ -217,8 +259,8 @@ export const handlers = [
     });
   }),
 
-  http.post('*/api/applications', async ({ request }) => {
-    const body = (await request.json()) as any;
+  ...route('post', '/api/applications', async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as any;
     const newApp = {
       id: `app-new-${Date.now()}`,
       applicationNumber: `AICTE-2026-RO-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -249,24 +291,78 @@ export const handlers = [
       {
         id: 'chk-new-2',
         category: newApp.category,
-        label: 'Sanctioned Master Building Plan & NOC',
-        clauseRef: 'APH-2026-APP-2',
+        label: 'Approved Architectural Blueprint CAD Drawing',
+        clauseRef: 'APH-2026-INFRA-1',
         required: true,
         state: 'MISSING',
         docType: 'BUILDING_PLAN',
       },
+      {
+        id: 'chk-new-3',
+        category: newApp.category,
+        label: 'Sanctioned Faculty Cadre List with Biometric Identification',
+        clauseRef: 'APH-2026-FAC-1',
+        required: true,
+        state: 'MISSING',
+        docType: 'FACULTY_LIST',
+      },
+      {
+        id: 'chk-new-4',
+        category: newApp.category,
+        label: 'State Fire Service Safety NOC',
+        clauseRef: 'APH-2026-SAFETY-1',
+        required: true,
+        state: 'MISSING',
+        docType: 'FIRE_NOC',
+      },
+    ];
+
+    claimsMap[newApp.id] = [
+      {
+        claimId: `clm-${Date.now()}-1`,
+        applicationId: newApp.id,
+        docId: 'chk-new-1',
+        predicate: 'carpet_area_sqm',
+        predicateLabel: 'Total Carpet Area (sq.m)',
+        value: 12500,
+        unit: 'sqm',
+        confidence: 0.95,
+        status: 'VERIFICATION_PENDING',
+        source: {
+          docId: 'chk-new-1',
+          page: 1,
+          bbox: [0.1, 0.1, 0.9, 0.2],
+          snippet: 'Declared Carpet Area: 12500 sqm',
+          docType: 'SELF_DISCLOSURE_FORM',
+        },
+        needsConfirmation: false,
+      },
+      {
+        claimId: `clm-${Date.now()}-2`,
+        applicationId: newApp.id,
+        docId: 'chk-new-3',
+        predicate: 'student_faculty_ratio',
+        predicateLabel: 'Student-to-Faculty Ratio',
+        value: '1:20',
+        confidence: 0.92,
+        status: 'VERIFICATION_PENDING',
+        source: {
+          docId: 'chk-new-3',
+          page: 1,
+          bbox: [0.1, 0.3, 0.9, 0.4],
+          snippet: 'Cadre ratio: 1:20',
+          docType: 'FACULTY_LIST',
+        },
+        needsConfirmation: false,
+      },
     ];
 
     findingsMap[newApp.id] = [];
-    claimsMap[newApp.id] = [];
 
-    return HttpResponse.json({
-      success: true,
-      data: newApp,
-    });
+    return HttpResponse.json({ success: true, data: newApp });
   }),
 
-  http.get('*/api/applications/:id', ({ params }) => {
+  ...route('get', '/api/applications/:id', ({ params }) => {
     const { id } = params;
     const app = applications.find((a) => a.id === id);
     if (!app) {
@@ -279,13 +375,13 @@ export const handlers = [
   }),
 
   // --- Documents & Checklists ---
-  http.get('*/api/applications/:id/documents', ({ params }) => {
+  ...route('get', '/api/applications/:id/documents', ({ params }) => {
     const { id } = params as { id: string };
     const items = checklistMap[id] || checklistMap[faultedApplication.id] || [];
     return HttpResponse.json({ success: true, data: items });
   }),
 
-  http.post('*/api/documents/upload', async ({ request }) => {
+  ...route('post', '/api/documents/upload', async () => {
     await delay(300);
     return HttpResponse.json({
       success: true,
@@ -298,15 +394,15 @@ export const handlers = [
   }),
 
   // --- Claims ---
-  http.get('*/api/applications/:id/claims', ({ params }) => {
+  ...route('get', '/api/applications/:id/claims', ({ params }) => {
     const { id } = params as { id: string };
     const claims = claimsMap[id] || claimsMap[faultedApplication.id] || [];
     return HttpResponse.json({ success: true, data: claims });
   }),
 
-  http.patch('*/api/claims/:claimId', async ({ params, request }) => {
+  ...route('patch', '/api/claims/:claimId', async ({ params, request }) => {
     const { claimId } = params as { claimId: string };
-    const body = (await request.json()) as any;
+    const body = (await request.json().catch(() => ({}))) as any;
     const { value, reason } = body;
 
     if (!reason || reason.trim().length < 5) {
@@ -334,44 +430,42 @@ export const handlers = [
     return HttpResponse.json({
       success: true,
       data: {
-        rulesRerun: 4,
-        rulesTotal: 18,
-        closed: 1,
-        opened: 0,
-        changed: 1,
+        claimId,
+        newStatus: 'VERIFIED',
+        recheckFindings: [],
+        timestamp: new Date().toISOString(),
       },
     });
   }),
 
-  http.patch('*/api/claims/:claimId/confirm', ({ params }) => {
+  ...route('patch', '/api/claims/:claimId/confirm', ({ params }) => {
     const { claimId } = params as { claimId: string };
-    let foundClaim: Claim | undefined;
+    let confirmedClaim: Claim | undefined;
     Object.values(claimsMap).forEach((list) => {
-      const c = list.find((item) => item.claimId === claimId);
-      if (c) {
-        c.needsConfirmation = false;
-        c.confirmed = true;
-        c.status = 'VERIFIED';
-        foundClaim = c;
+      const target = list.find((c) => c.claimId === claimId);
+      if (target) {
+        target.needsConfirmation = false;
+        target.status = 'VERIFIED';
+        confirmedClaim = target;
       }
     });
 
     return HttpResponse.json({
       success: true,
-      data: foundClaim || { claimId, confirmed: true },
+      data: confirmedClaim || { claimId, needsConfirmation: false },
     });
   }),
 
   // --- Findings ---
-  http.get('*/api/applications/:id/findings', ({ params }) => {
+  ...route('get', '/api/applications/:id/findings', ({ params }) => {
     const { id } = params as { id: string };
     const findings = findingsMap[id] || findingsMap[faultedApplication.id] || [];
     return HttpResponse.json({ success: true, data: findings });
   }),
 
-  http.post('*/api/findings/:id/disposition', async ({ params, request }) => {
+  ...route('post', '/api/findings/:id/disposition', async ({ params, request }) => {
     const { id } = params as { id: string };
-    const body = (await request.json()) as any;
+    const body = (await request.json().catch(() => ({}))) as any;
     const { state, reason } = body;
 
     if (state === 'DISMISSED' && (!reason || reason.trim().length < 10)) {
@@ -404,14 +498,14 @@ export const handlers = [
   }),
 
   // --- Ledger ---
-  http.get('*/api/applications/:id/ledger', ({ params }) => {
+  ...route('get', '/api/applications/:id/ledger', ({ params }) => {
     const { id } = params as { id: string };
     const ledger = (ledgerMap as any)[id] || ledgerMap[faultedApplication.id] || [];
     return HttpResponse.json({ success: true, data: ledger });
   }),
 
   // --- Validity ---
-  http.get('*/api/applications/:id/validity', ({ params }) => {
+  ...route('get', '/api/applications/:id/validity', ({ params }) => {
     const { id } = params as { id: string };
     let validity = id === cleanApplication.id ? [...cleanValidity] : [...faultedValidity];
 
@@ -437,29 +531,30 @@ export const handlers = [
   }),
 
   // --- Self-Check ---
-  http.post('*/api/applications/:id/self-check', async ({ params }) => {
-    await delay(600);
+  ...route('post', '/api/applications/:id/self-check', async ({ params }) => {
     const { id } = params as { id: string };
-    const findings = findingsMap[id] || [];
+    await delay(600);
+    const findings = findingsMap[id] || findingsMap[faultedApplication.id] || [];
     return HttpResponse.json({
       success: true,
-      data: { findings },
+      data: {
+        findings,
+        timestamp: new Date().toISOString(),
+      },
     });
   }),
 
   // --- Decision ---
-  http.post('*/api/applications/:id/decision', async ({ params, request }) => {
+  ...route('post', '/api/applications/:id/decision', async ({ params, request }) => {
     const { id } = params as { id: string };
-    const body = (await request.json()) as any;
+    const body = (await request.json().catch(() => ({}))) as any;
     const { outcome, reason } = body;
 
     const app = applications.find((a) => a.id === id);
     if (app) {
-      if (outcome === 'APPROVED') {
-        app.status = 'APPROVED';
-      } else if (outcome === 'REJECTED') {
-        app.status = 'REJECTED';
-      }
+      app.status = outcome === 'APPROVE' ? 'APPROVED' : outcome === 'REJECT' ? 'REJECTED' : 'DEFICIENCY_RAISED';
+      (app as any).decisionReason = reason;
+      (app as any).decidedAt = new Date().toISOString();
     }
 
     return HttpResponse.json({
@@ -469,20 +564,20 @@ export const handlers = [
   }),
 
   // --- Deficiency Letters ---
-  http.get('*/api/applications/:id/letters', ({ params }) => {
+  ...route('get', '/api/applications/:id/letters', ({ params }) => {
     const { id } = params as { id: string };
     const letters = lettersMap[id] || [];
     return HttpResponse.json({ success: true, data: letters });
   }),
 
-  http.post('*/api/applications/:id/letters', async ({ params, request }) => {
+  ...route('post', '/api/applications/:id/letters', async ({ params, request }) => {
     const { id } = params as { id: string };
-    const body = (await request.json()) as any;
+    const body = (await request.json().catch(() => ({}))) as any;
     const newLetter = {
       id: `let-${Date.now()}`,
       applicationId: id,
       findingIds: body.findingIds || [],
-      content: body.content,
+      content: body.content || '',
       status: 'SENT',
       createdAt: new Date().toISOString(),
       sentAt: new Date().toISOString(),
@@ -490,7 +585,7 @@ export const handlers = [
     };
 
     if (!lettersMap[id]) lettersMap[id] = [];
-    lettersMap[id].unshift(newLetter);
+    lettersMap[id].push(newLetter);
 
     return HttpResponse.json({
       success: true,
@@ -498,15 +593,18 @@ export const handlers = [
     });
   }),
 
-  // --- Audit & Hash Chain ---
-  http.get('*/api/audit', () => {
+  // --- Cryptographic Audit Chain ---
+  ...route('get', '/api/audit', () => {
     return HttpResponse.json({
       success: true,
       data: auditEvents,
+      meta: {
+        totalItems: auditEvents.length,
+      },
     });
   }),
 
-  http.get('*/api/audit/verify', () => {
+  ...route('get', '/api/audit/verify', () => {
     if (auditTampered) {
       return HttpResponse.json({
         success: true,
@@ -514,9 +612,11 @@ export const handlers = [
           intact: false,
           verifiedCount: 1,
           brokenAtSeq: 2,
+          reason: 'SHA-256 hash mismatch at event sequence #2: cryptographic parent pointer violated.',
         },
       });
     }
+
     return HttpResponse.json({
       success: true,
       data: {
@@ -526,58 +626,111 @@ export const handlers = [
     });
   }),
 
-  // --- Benchmark ---
-  http.get('*/api/benchmark/runs', () => {
+  // --- Benchmark Runs ---
+  ...route('get', '/api/benchmark/runs', () => {
     return HttpResponse.json({
       success: true,
-      data: [
-        {
-          runId: 'bench-seed-42',
-          timestamp: '2026-10-24T06:00:00Z',
-          n: 100,
-          seed: 42,
-          faultRate: 0.35,
-          scanRatio: 0.4,
-          manifestHash: 'sha256-8a9d12f3bc17e9a8',
-          status: 'COMPLETED',
-          results: {
-            extractionAccuracy: 98.4,
-            validationAccuracy: 99.1,
-            cleanAppFalsePositiveRate: 0.0,
-            avgVerificationTimeSec: 2.3,
-            scanVsTextAccuracy: { scan: 97.2, text: 99.8 },
-            alertTimelinessMin: 0.8,
-            perFault: [
-              { faultType: 'AREA_MISMATCH', precision: 1.0, recall: 0.98, f1: 0.99, tp: 34, fp: 0, fn: 1 },
-              { faultType: 'FACULTY_INTAKE', precision: 0.97, recall: 1.0, f1: 0.98, tp: 28, fp: 1, fn: 0 },
-              { faultType: 'TER_PAYMENT', precision: 1.0, recall: 1.0, f1: 1.0, tp: 22, fp: 0, fn: 0 },
-              { faultType: 'NOC_VALIDITY', precision: 1.0, recall: 0.96, f1: 0.98, tp: 25, fp: 0, fn: 1 },
-              { faultType: 'DOC_FORENSICS', precision: 0.95, recall: 0.92, f1: 0.93, tp: 19, fp: 1, fn: 2 },
-            ],
-          },
-        },
-      ],
+      data: benchmarkRuns,
     });
   }),
 
+  ...route('post', '/api/benchmark/run', async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as any;
+    const n = Number(body.n) || 100;
+    const seed = Number(body.seed) || 42;
+    const faultRate = typeof body.faultRate === 'number' ? body.faultRate : 0.35;
+    const scanRatio = typeof body.scanRatio === 'number' ? body.scanRatio : 0.4;
+
+    const totalInjectedFaults = Math.round(n * faultRate);
+
+    const newRun: BenchmarkRun = {
+      runId: `bench-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      n,
+      seed,
+      faultRate,
+      scanRatio,
+      manifestHash: `sha256-${Math.random().toString(36).substring(2, 10)}${Date.now()}`,
+      status: 'COMPLETED',
+      results: {
+        extractionAccuracy: +(99.2 + Math.random() * 0.6).toFixed(1),
+        validationAccuracy: +(99.0 + Math.random() * 0.8).toFixed(1),
+        cleanAppFalsePositiveRate: 0.0,
+        avgVerificationTimeSec: +(1.1 + Math.random() * 0.3).toFixed(1),
+        scanVsTextAccuracy: { scan: 98.6, text: 99.8 },
+        alertTimelinessMin: +(4.2 + Math.random() * 0.9).toFixed(1),
+        perFault: [
+          {
+            faultType: 'AREA_MISMATCH',
+            precision: 1.0,
+            recall: +(0.97 + Math.random() * 0.03).toFixed(2),
+            f1: 0.99,
+            tp: Math.max(1, Math.round(totalInjectedFaults * 0.28)),
+            fp: 0,
+            fn: 1,
+          },
+          {
+            faultType: 'FACULTY_INTAKE',
+            precision: 0.98,
+            recall: 1.0,
+            f1: 0.99,
+            tp: Math.max(1, Math.round(totalInjectedFaults * 0.24)),
+            fp: 1,
+            fn: 0,
+          },
+          {
+            faultType: 'TER_PAYMENT',
+            precision: 1.0,
+            recall: 1.0,
+            f1: 1.0,
+            tp: Math.max(1, Math.round(totalInjectedFaults * 0.20)),
+            fp: 0,
+            fn: 0,
+          },
+          {
+            faultType: 'NOC_VALIDITY',
+            precision: 1.0,
+            recall: +(0.96 + Math.random() * 0.04).toFixed(2),
+            f1: 0.98,
+            tp: Math.max(1, Math.round(totalInjectedFaults * 0.22)),
+            fp: 0,
+            fn: 1,
+          },
+          {
+            faultType: 'DOC_FORENSICS',
+            precision: 0.96,
+            recall: +(0.93 + Math.random() * 0.05).toFixed(2),
+            f1: 0.94,
+            tp: Math.max(1, Math.round(totalInjectedFaults * 0.16)),
+            fp: 1,
+            fn: 1,
+          },
+        ],
+      },
+    };
+
+    benchmarkRuns.unshift(newRun);
+    return HttpResponse.json({ success: true, data: newRun });
+  }),
+
   // --- Demo Settings ---
-  http.get('*/api/demo/settings', () => {
+  ...route('get', '/api/demo/settings', () => {
     return HttpResponse.json({ success: true, data: demoSettings });
   }),
 
-  http.put('*/api/demo/settings', async ({ request }) => {
-    const body = (await request.json()) as any;
+  ...route('put', '/api/demo/settings', async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as any;
     demoSettings = { ...demoSettings, ...body };
     return HttpResponse.json({ success: true, data: demoSettings });
   }),
 
-  http.post('*/api/demo/tamper-audit', () => {
+  ...route('post', '/api/demo/tamper-audit', () => {
     auditTampered = true;
     return HttpResponse.json({ success: true, message: 'Audit event #2 tampered in test environment.' });
   }),
 
   // --- Categories ---
-  http.get('*/api/categories', () => {
+  ...route('get', '/api/categories', () => {
     return HttpResponse.json({
       success: true,
       data: [
@@ -589,23 +742,23 @@ export const handlers = [
   }),
 
   // --- Alerts ---
-  http.get('*/api/alerts', () => {
+  ...route('get', '/api/alerts', () => {
     return HttpResponse.json({
       success: true,
       data: alerts,
     });
   }),
 
-  http.post('*/api/alerts/:id/ack', ({ params }) => {
+  ...route('post', '/api/alerts/:id/ack', ({ params }) => {
     const { id } = params as { id: string };
     const alt = alerts.find((a) => a.id === id);
     if (alt) alt.acknowledged = true;
     return HttpResponse.json({ success: true, data: alt });
   }),
 
-  http.patch('*/api/alerts/:id', async ({ params, request }) => {
+  ...route('patch', '/api/alerts/:id', async ({ params, request }) => {
     const { id } = params as { id: string };
-    const body = (await request.json()) as any;
+    const body = (await request.json().catch(() => ({}))) as any;
     const alt = alerts.find((a) => a.id === id);
     if (alt) {
       if (body.status === 'RESOLVED' || body.status === 'ACKNOWLEDGED' || body.status === 'FALSE_POSITIVE') {
@@ -619,15 +772,24 @@ export const handlers = [
   }),
 
   // --- Institutions ---
-  http.get('*/api/institutions', () => {
+  ...route('get', '/api/institutions', () => {
     return HttpResponse.json({
       success: true,
       data: archiveInstitutions,
     });
   }),
 
+  ...route('get', '/api/institutions/:id', ({ params }) => {
+    const { id } = params as { id: string };
+    const inst = archiveInstitutions.find((i) => i.id === id) || archiveInstitutions[0];
+    return HttpResponse.json({
+      success: true,
+      data: inst,
+    });
+  }),
+
   // --- Triangle of Truth ---
-  http.get('*/api/applications/:id/triangle', () => {
+  ...route('get', '/api/applications/:id/triangle', () => {
     return HttpResponse.json({
       success: true,
       data: archiveTriangleFindings,
@@ -635,7 +797,7 @@ export const handlers = [
   }),
 
   // --- Forensics Suite ---
-  http.get('*/api/applications/:id/forensics', () => {
+  ...route('get', '/api/applications/:id/forensics', () => {
     return HttpResponse.json({
       success: true,
       data: archiveForensicsData,
@@ -643,7 +805,7 @@ export const handlers = [
   }),
 
   // --- 5-Pillar Risk Score Breakdown ---
-  http.get('*/api/applications/:id/risk-score', ({ params }) => {
+  ...route('get', '/api/applications/:id/risk-score', ({ params }) => {
     const { id } = params as { id: string };
     return HttpResponse.json({
       success: true,
@@ -655,7 +817,7 @@ export const handlers = [
   }),
 
   // --- Automated Scrutiny Check Run ---
-  http.post('*/api/applications/:id/run-checks', async () => {
+  ...route('post', '/api/applications/:id/run-checks', async () => {
     await delay(500);
     const steps = [
       { name: 'OCR extraction', status: 'SUCCEEDED' as const },
