@@ -19,7 +19,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isDevSession: boolean;
-  login: (email: string, roleHint?: UserRole) => Promise<User>;
+  login: (email: string, password?: string, roleHint?: UserRole) => Promise<User>;
   devBypassLogin: (role: UserRole) => void;
   logout: () => void;
 }
@@ -115,11 +115,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (email: string, roleHint?: UserRole): Promise<User> => {
+  const login = async (email: string, password?: string, roleHint?: UserRole): Promise<User> => {
     setIsLoading(true);
     try {
-      const res = await apiClient.post('/auth/login', { email, roleHint });
-      const { token: receivedToken, user: receivedUser } = res.data.data;
+      const payload: Record<string, any> = { email: email.trim().toLowerCase() };
+      if (password) payload.password = password;
+      if (roleHint) payload.roleHint = roleHint;
+
+      const res = await apiClient.post('/auth/login', payload);
+      const data = res.data?.data || res.data;
+      const receivedToken = data.token;
+      const receivedUser = data.user;
 
       setStoredToken(receivedToken);
       sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(receivedUser));
@@ -137,25 +143,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Development-Only Bypass Login
-  const devBypassLogin = (role: UserRole) => {
-    // Strictly guarded against execution in production
+  const devBypassLogin = async (role: UserRole) => {
     if (!import.meta.env.DEV) {
       console.warn('Development bypass login is disabled in production.');
       return;
     }
 
     const mockUser = MOCK_DEV_USERS[role] || MOCK_DEV_USERS.INSTITUTION;
-    const mockToken = `dev-mock-jwt-token-for-${role.toLowerCase()}`;
-
-    setStoredToken(mockToken);
-    sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockUser));
-    sessionStorage.setItem(DEV_SESSION_KEY, 'true');
-
-    setToken(mockToken);
-    setUser(mockUser);
-    setIsDevSession(true);
-
-    routeByRole(mockUser.role);
+    try {
+      await login(mockUser.email, undefined, role);
+    } catch {
+      const mockToken = `dev-mock-jwt-token-for-${role.toLowerCase()}`;
+      setStoredToken(mockToken);
+      sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockUser));
+      sessionStorage.setItem(DEV_SESSION_KEY, 'true');
+      setToken(mockToken);
+      setUser(mockUser);
+      setIsDevSession(true);
+      routeByRole(mockUser.role);
+    }
   };
 
   const logout = () => {

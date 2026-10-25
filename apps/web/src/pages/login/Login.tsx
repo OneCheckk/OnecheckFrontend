@@ -89,7 +89,7 @@ export const LoginPage: React.FC = () => {
 
     try {
       setErrorMsg(null);
-      await login(email);
+      await login(email, password, selectedRole);
     } catch (err: any) {
       const nextAttempts = attempts + 1;
       setAttempts(nextAttempts);
