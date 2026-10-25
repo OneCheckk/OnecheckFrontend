@@ -9,6 +9,8 @@ import {
   useRunSelfCheck,
   useCorrectClaim,
   useConfirmClaim,
+  useUploadDocument,
+  useSubmitApplication,
 } from '../../api/queries';
 import { ChecklistPanel } from '../../components/data/ChecklistPanel';
 import { ClaimTable } from '../../components/data/ClaimTable';
@@ -44,6 +46,23 @@ export const InstitutionWorkspacePage: React.FC = () => {
   const runSelfCheckMutation = useRunSelfCheck(id);
   const correctClaimMutation = useCorrectClaim(id);
   const confirmClaimMutation = useConfirmClaim(id);
+  const uploadDocMutation = useUploadDocument(id);
+  const submitAppMutation = useSubmitApplication(id);
+
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+
+  const handleSubmitApplication = async () => {
+    if (!canSubmit) return;
+    setSubmitError(null);
+    try {
+      await submitAppMutation.mutateAsync();
+      setSubmitSuccess('Application submitted successfully for official regulatory scrutiny.');
+    } catch (err: any) {
+      const msg = err.response?.data?.error?.message || 'Failed to submit application.';
+      setSubmitError(msg);
+    }
+  };
 
   if (appLoading) {
     return (
@@ -125,11 +144,13 @@ export const InstitutionWorkspacePage: React.FC = () => {
             <div className="relative group">
               <Button
                 variant="primary"
-                disabled={!canSubmit}
+                disabled={!canSubmit || submitAppMutation.isPending}
+                isLoading={submitAppMutation.isPending}
+                onClick={handleSubmitApplication}
                 className="bg-[#005ea2] hover:bg-blue-800 font-bold"
               >
                 <Send className="w-4 h-4 mr-1.5" />
-                Submit Application
+                {application.status === 'DRAFT' ? 'Submit Application' : 'Resubmit Filing'}
               </Button>
 
               {!canSubmit && (
@@ -149,6 +170,25 @@ export const InstitutionWorkspacePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {submitSuccess && (
+        <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-lg text-xs font-semibold flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+            <span>{submitSuccess}</span>
+          </div>
+          <button onClick={() => setSubmitSuccess(null)} className="text-emerald-500 hover:text-emerald-800 text-xs">✕</button>
+        </div>
+      )}
+      {submitError && (
+        <div className="p-3 bg-red-50 border border-red-300 text-red-900 rounded-lg text-xs font-semibold flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-700" />
+            <span>{submitError}</span>
+          </div>
+          <button onClick={() => setSubmitError(null)} className="text-red-500 hover:text-red-800 text-xs">✕</button>
+        </div>
+      )}
 
       {/* Toast constructed from API response */}
       {recheckToast && (
@@ -234,8 +274,15 @@ export const InstitutionWorkspacePage: React.FC = () => {
         <ChecklistPanel
           items={checklist}
           onUploadFile={async (itemId, file, docTypeHint) => {
-            // Mock or live upload
-            console.log('Uploaded file', file.name, 'for item', itemId, 'hint', docTypeHint);
+            try {
+              await uploadDocMutation.mutateAsync({ file, docTypeHint, checklistItemId: itemId });
+              setRecheckToast(`Successfully uploaded ${file.name}. Regulatory extraction queued.`);
+              setTimeout(() => setRecheckToast(null), 5000);
+            } catch (err: any) {
+              const msg = err.response?.data?.error?.message || 'File upload failed. Please verify format & size.';
+              setSubmitError(msg);
+              setTimeout(() => setSubmitError(null), 6000);
+            }
           }}
         />
       )}

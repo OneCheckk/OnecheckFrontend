@@ -46,10 +46,13 @@ export const useApplications = (filters?: { band?: string; status?: string; sear
   return useQuery({
     queryKey: queryKeys.apps(filters),
     queryFn: async () => {
-      const res = await apiClient.get<{ success: boolean; data: Application[] }>('/applications', {
+      const res = await apiClient.get<any>('/applications', {
         params: filters,
       });
-      return res.data.data;
+      const data = res.data?.data;
+      if (Array.isArray(data)) return data;
+      if (data?.applications && Array.isArray(data.applications)) return data.applications;
+      return [];
     },
   });
 };
@@ -58,8 +61,9 @@ export const useApplication = (id: string) => {
   return useQuery({
     queryKey: queryKeys.app(id),
     queryFn: async () => {
-      const res = await apiClient.get<{ success: boolean; data: Application }>(`/applications/${id}`);
-      return res.data.data;
+      const res = await apiClient.get<any>(`/applications/${id}`);
+      const data = res.data?.data;
+      return (data?.application || data) as Application;
     },
     enabled: !!id,
   });
@@ -69,8 +73,43 @@ export const useApplicationChecklist = (id: string) => {
   return useQuery({
     queryKey: queryKeys.docs(id),
     queryFn: async () => {
-      const res = await apiClient.get<{ success: boolean; data: ChecklistItem[] }>(`/applications/${id}/documents`);
-      return res.data.data;
+      try {
+        const res = await apiClient.get<any>(`/applications/${id}/checklist`);
+        const data = res.data?.data;
+        if (Array.isArray(data)) {
+          return data.map((item: any) => ({
+            ...item,
+            state: item.status || item.state || 'MISSING',
+            fileName: item.document?.originalName || item.fileName,
+          }));
+        }
+        if (data?.items && Array.isArray(data.items)) {
+          return data.items.map((item: any) => ({
+            ...item,
+            state: item.status || item.state || 'MISSING',
+            fileName: item.document?.originalName || item.fileName,
+          }));
+        }
+      } catch {
+        // Fallback to /documents
+      }
+      try {
+        const docRes = await apiClient.get<any>(`/applications/${id}/documents`);
+        const docs = docRes.data?.data;
+        if (Array.isArray(docs)) {
+          return docs.map((d: any) => ({
+            id: d._id || d.id,
+            label: d.originalName || d.documentType,
+            docTypes: [d.documentType || d.docType],
+            required: true,
+            state: d.uploadStatus === 'STORED' ? 'DONE' : 'UPLOADED',
+            fileName: d.originalName,
+          }));
+        }
+      } catch {
+        // Ignore fallback error
+      }
+      return [] as ChecklistItem[];
     },
     enabled: !!id,
   });
@@ -365,3 +404,44 @@ export const useUpdateAlertStatus = () => {
   });
 };
 
+
+export const useUploadDocument = (applicationId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ file, docTypeHint, checklistItemId }: { file: File; docTypeHint?: string; checklistItemId?: string }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (docTypeHint) {
+        formData.append('docType', docTypeHint);
+        formData.append('docTypeHint', docTypeHint);
+        formData.append('documentType', docTypeHint);
+      }
+      if (checklistItemId) {
+        formData.append('checklistItemId', checklistItemId);
+      }
+      const res = await apiClient.post(`/applications/${applicationId}/documents`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return res.data?.data || res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.docs(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.claims(applicationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.app(applicationId) });
+    },
+  });
+};
+
+export const useSubmitApplication = (applicationId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiClient.post(`/applications/${applicationId}/submit`);
+      return res.data?.data || res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.app(applicationId) });
+      queryClient.invalidateQueries({ queryKey: ['apps'] });
+    },
+  });
+};
