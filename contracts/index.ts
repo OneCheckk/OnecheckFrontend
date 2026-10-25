@@ -332,3 +332,159 @@ export interface ClaimRecheckResult {
   opened: number;
   changed: number;
 }
+
+// ==========================================
+// Integration Extensions: Institutions, Triangle, Forensics & Risk
+// ==========================================
+
+export interface Institution {
+  id: string;
+  name: string;
+  registrationId: string;
+  address: string;
+  state: string;
+  latitude: number;
+  longitude: number;
+  verificationStatus: 'PENDING' | 'VERIFIED' | 'REJECTED';
+}
+
+export interface TriangleNode {
+  source: 'COLLEGE_CLAIM' | 'DOCUMENT_OCR' | 'AICTE_RECORDS';
+  value: string;
+}
+
+export interface TriangleFinding {
+  id: string;
+  title: string;
+  claimKey: string;
+  nodes: [TriangleNode, TriangleNode, TriangleNode];
+  status: VerificationStatus;
+  explanation: string;
+  handbookClause: string;
+  evidencePage: string;
+}
+
+export interface PdfRevision {
+  stream: number;
+  savedAt: string;
+  tool: string;
+  note: string;
+  suspicious: boolean;
+}
+
+export interface ElaFlaggedRegion {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  label: string;
+}
+
+export interface ElaResult {
+  documentId: string;
+  documentName: string;
+  score: number;
+  flaggedRegions: ElaFlaggedRegion[];
+  isSimulated: boolean;
+}
+
+export interface BlueprintRoom {
+  name: string;
+  sqm: number;
+}
+
+export interface BlueprintResult {
+  claimedSqm: number;
+  detectedSqm: number;
+  rooms: BlueprintRoom[];
+  isSimulated: boolean;
+}
+
+export interface InfraPhoto {
+  id: string;
+  photoType: string;
+  gpsLatitude: number | null;
+  gpsLongitude: number | null;
+  distanceFromCampus: number | null;
+  geofenceStatus: 'PASS' | 'FAIL' | 'NO_GPS_DATA';
+  imageHash: string | null;
+  isStockImage: boolean;
+}
+
+export interface PerceptualMatch {
+  photoId: string;
+  hash64: string;
+  matchedInstitution: string | null;
+  hammingDistance: number | null;
+  isStockImage: boolean;
+}
+
+export interface FacultyMatch {
+  id: string;
+  nameNormalized: string;
+  identifierType: 'AADHAAR' | 'PAN';
+  isGhostFlagged: boolean;
+  matchInstitutionName: string | null;
+  matchConfidence: number | null;
+}
+
+export interface ForensicsSuiteData {
+  pdfRevisions: PdfRevision[];
+  ela: ElaResult[];
+  photos: InfraPhoto[];
+  perceptual: PerceptualMatch[];
+  faculty: FacultyMatch[];
+  blueprint: BlueprintResult;
+}
+
+export interface PillarScores {
+  documentCompleteness: number;
+  anomalyFlags: number;
+  sourceVerification: number;
+  historicalCompliance: number;
+  infrastructureEvidence: number;
+}
+
+export interface RiskDeduction {
+  ruleId: string;
+  pillar: string;
+  points: number;
+  explanation: string;
+  handbookRef: string | null;
+}
+
+export interface RiskScoreBreakdown {
+  applicationId: string;
+  totalScore: number;
+  riskLevel: Band;
+  pillarScores: PillarScores;
+  deductions: RiskDeduction[];
+  rulesVersion: string;
+}
+
+export interface CheckRunStep {
+  name: string;
+  status: 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'UNAVAILABLE';
+}
+
+export interface CheckRun {
+  runId: string;
+  status: 'QUEUED' | 'RUNNING' | 'PARTIAL' | 'SUCCEEDED' | 'FAILED';
+  steps: CheckRunStep[];
+}
+
+export type AppPermission =
+  | 'CREATE_APPLICATION'
+  | 'SUBMIT_APPLICATION'
+  | 'UPLOAD_DOCUMENT'
+  | 'INSPECT_DOCUMENT'
+  | 'RUN_SCRUTINY_CHECKS'
+  | 'DECIDE_MANUAL_REVIEW'
+  | 'VIEW_ALL_APPLICATIONS'
+  | 'VIEW_ALERTS_QUEUE'
+  | 'UPDATE_ALERT'
+  | 'VIEW_FORENSICS'
+  | 'VIEW_SYSTEM_HEALTH'
+  | 'VIEW_FULL_AUDIT'
+  | 'MANAGE_USERS';
+
