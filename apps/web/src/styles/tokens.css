@@ -4,10 +4,12 @@
 
 :root {
   --color-primary: #0b2545;
+  --color-headline: #0B2038;
+  --color-text-paragraph: #475569;
   --color-accent: #005ea2;
   --color-surface: #f8fafc;
   --color-border: #cbd5e1;
-  --color-text: #0f172a;
+  --color-text: #0B2038;
   --color-text-muted: #475569;
   
   --status-verified: #15803d;
@@ -24,12 +26,55 @@
   --band-green: #15803d;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.5;
   color: var(--color-text);
   background-color: #f8fafc;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Sliding Shadow Animation for Hero Background with Increased Brightness */
+@keyframes heroBgShadowSlide {
+  0% {
+    filter: drop-shadow(0 4px 12px rgba(11, 32, 56, 0.12)) brightness(1.2);
+    transform: scale(1.0);
+  }
+  50% {
+    filter: drop-shadow(-25px 15px 35px rgba(11, 32, 56, 0.2)) brightness(1.25);
+    transform: scale(1.015);
+  }
+  100% {
+    filter: drop-shadow(0 4px 12px rgba(11, 32, 56, 0.12)) brightness(1.2);
+    transform: scale(1.0);
+  }
+}
+
+@keyframes heroShadowSweep {
+  0% {
+    transform: translateX(-120%) skewX(-20deg);
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+  100% {
+    transform: translateX(220%) skewX(-20deg);
+    opacity: 0.1;
+  }
+}
+
+.animate-hero-bg-shadow {
+  animation: heroBgShadowSlide 10s ease-in-out infinite;
+}
+
+.animate-sliding-shadow-sweep {
+  animation: heroShadowSweep 7s ease-in-out infinite;
 }
 
 /* Accessible focus ring */
